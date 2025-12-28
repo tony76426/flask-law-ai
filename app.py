@@ -99,8 +99,8 @@ def generate_aireport_opinion():
 
 三、關鍵要點分析：
 請務必分成兩段撰寫，並用空行分隔。
-第一段：對您有利的情節。
-第二段：對您不利的風險，並在段落後半加入整體判斷與後續建議（不得另起第三段）。
+第一段：說明對您有利的情節。
+第二段：說明對您不利的風險，並在段落後半加入整體判斷與後續建議（不得另起第三段）。
 
 四、建議行動方案：
 提出三項具體可執行建議，例如聯繫、保存紀錄、委託第三方處理等。
@@ -146,7 +146,8 @@ def generate_aireport_opinion():
 
 # AI Report「發送給律師」使用的 Email 文字 API
 # 前端會送進來 JSON：{ name, phone, line, text }
-# 本實作會使用環境變數中的 GMAIL_ACCOUNT / GMAIL_PASSWORD，透過 Gmail SMTP 寄信。
+# 本實作會使用環境變數中的 GMAIL_ACCOUNT / GMAIL_PASSWORD 登入，
+# 但收件人固定寄到 tony0975127359@gmail.com。
 @app.route("/api/email-text", methods=["POST"])
 def email_text():
     try:
@@ -158,6 +159,7 @@ def email_text():
 
         gmail_user = os.environ.get("GMAIL_ACCOUNT")
         gmail_pass = os.environ.get("GMAIL_PASSWORD")
+        receiver = "tony0975127359@gmail.com"
 
         if not gmail_user or not gmail_pass:
             raise RuntimeError("GMAIL_ACCOUNT 或 GMAIL_PASSWORD 未設定")
@@ -176,17 +178,17 @@ LINE ID：{line_id}
 
         msg = MIMEMultipart()
         msg["From"] = gmail_user
-        msg["To"] = 'tony0975127359@gmail.com'
+        msg["To"] = receiver
         msg["Subject"] = subject
         msg.attach(MIMEText(body, "plain", "utf-8"))
 
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
             server.login(gmail_user, gmail_pass)
-            server.sendmail(gmail_user, [gmail_user], msg.as_string())
+            server.sendmail(gmail_user, [receiver], msg.as_string())
 
         print("=== 已成功寄出 AI Report Email 給律師信箱 ===")
-        print("收件人:", 'tony0975127359@gmail.com')
+        print("收件人:", receiver)
         print("姓名:", name, "電話:", phone, "LINE:", line_id)
         print("=== 結束 ===")
 
@@ -197,11 +199,14 @@ LINE ID：{line_id}
 
 
 # PDF 附件版寄信 API：前端以 form-data 上傳 pdf + 基本聯絡資訊
+# 同樣固定寄到 tony0975127359@gmail.com。
 @app.route("/api/email", methods=["POST"])
 def email_with_pdf():
     try:
         gmail_user = os.environ.get("GMAIL_ACCOUNT")
         gmail_pass = os.environ.get("GMAIL_PASSWORD")
+        receiver = "tony0975127359@gmail.com"
+
         if not gmail_user or not gmail_pass:
             raise RuntimeError("GMAIL_ACCOUNT 或 GMAIL_PASSWORD 未設定")
 
@@ -229,7 +234,7 @@ LINE ID：{line_id}
 
         msg = MIMEMultipart()
         msg["From"] = gmail_user
-        msg["To"] = 'tony0975127359@gmail.com'
+        msg["To"] = receiver
         msg["Subject"] = subject
         msg.attach(MIMEText(body, "plain", "utf-8"))
 
@@ -240,10 +245,10 @@ LINE ID：{line_id}
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
             server.login(gmail_user, gmail_pass)
-            server.sendmail(gmail_user, [gmail_user], msg.as_string())
+            server.sendmail(gmail_user, [receiver], msg.as_string())
 
         print("=== 已成功寄出 AI Report PDF Email 給律師信箱 ===")
-        print("收件人:", 'tony0975127359@gmail.com')
+        print("收件人:", receiver)
         print("姓名:", name, "電話:", phone, "LINE:", line_id, "檔名:", filename)
         print("=== 結束 ===")
 
