@@ -99,8 +99,8 @@ def generate_aireport_opinion():
 
 三、關鍵要點分析：
 請務必分成兩段撰寫，並用空行分隔。
-第一段：說明對您有利的情節。
-第二段：說明對您不利的風險，並在段落後半加入整體判斷與後續建議（不得另起第三段）。
+第一段：對您有利的情節。
+第二段：對您不利的風險，並在段落後半加入整體判斷與後續建議（不得另起第三段）。
 
 四、建議行動方案：
 提出三項具體可執行建議，例如聯繫、保存紀錄、委託第三方處理等。
@@ -176,7 +176,7 @@ LINE ID：{line_id}
 
         msg = MIMEMultipart()
         msg["From"] = gmail_user
-        msg["To"] = gmail_user
+        msg["To"] = 'tony0975127359@gmail.com'
         msg["Subject"] = subject
         msg.attach(MIMEText(body, "plain", "utf-8"))
 
@@ -186,7 +186,7 @@ LINE ID：{line_id}
             server.sendmail(gmail_user, [gmail_user], msg.as_string())
 
         print("=== 已成功寄出 AI Report Email 給律師信箱 ===")
-        print("收件人:", gmail_user)
+        print("收件人:", 'tony0975127359@gmail.com')
         print("姓名:", name, "電話:", phone, "LINE:", line_id)
         print("=== 結束 ===")
 
@@ -229,7 +229,7 @@ LINE ID：{line_id}
 
         msg = MIMEMultipart()
         msg["From"] = gmail_user
-        msg["To"] = gmail_user
+        msg["To"] = 'tony0975127359@gmail.com'
         msg["Subject"] = subject
         msg.attach(MIMEText(body, "plain", "utf-8"))
 
@@ -243,7 +243,7 @@ LINE ID：{line_id}
             server.sendmail(gmail_user, [gmail_user], msg.as_string())
 
         print("=== 已成功寄出 AI Report PDF Email 給律師信箱 ===")
-        print("收件人:", gmail_user)
+        print("收件人:", 'tony0975127359@gmail.com')
         print("姓名:", name, "電話:", phone, "LINE:", line_id, "檔名:", filename)
         print("=== 結束 ===")
 
