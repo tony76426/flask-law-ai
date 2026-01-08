@@ -85,33 +85,58 @@ def generate_aireport_opinion():
             return {"selectedText": "", "customText": ""}
 
         # ===== 這一段是原本藏在前端 JS 裡的法律意見書提示詞，現在改放在後端 =====
-        final_prompt = f"""根據以下用戶回答內容，請撰寫一份法律意見書，重點如下：
+        final_prompt = f"""請根據以下用戶回答內容，撰寫一份「訴訟/處理策略導向」的法律意見書（以台灣法律實務用語表達），務必以可執行的行動路徑為核心。
 
 【案件情境摘要】
 使用者已確認本案主要情境如下：
 {chosen_scenario}
 
-一、案件事實：
-稱用戶為"您"，用語溫暖人性，以兩段文字敘述方式，具體重述事件經過（含人物、過程、爭議、現況及目前案件的法律階段），篇幅至少300字。除使用者所述外，亦可推測可能存在之背景與流程，合理補述未明示之關鍵情節。
+寫作與輸出規則：
+1) 稱呼用戶為「您」，語氣專業但清楚，不需艱澀法理。
+2) 不必引用法條條號、裁判案號，也不要整段貼法典。
+3) 不要下結論式斷言（例如「一定告得贏」「一定構成」），以「可能」「通常需要」「視證據而定」等表述。
+4) 請用清楚標題與條列，讓讀者可直接照著做；避免冗長鋪陳。
+5) 禁止使用粗體符號（例如 ** ）。
 
-二、案件爭執重點釐清：
-說明主要爭點、責任歸屬認知差異、爭議關鍵與後續可能影響（不得引用任何法律條文、條號、案號）。
+一、案件事實重述（重點版）
+用 150～250 字，按時間順序重述：當事人、關係、關鍵行為、爭議點、目前卡關之處、現況。
 
-三、關鍵要點分析：
-請務必分成兩段撰寫，並用空行分隔。
-第一段：說明對您有利的情節。
-第二段：說明對您不利的風險，並在段落後半加入整體判斷與後續建議（不得另起第三段）。
+二、目前所處程序/談判階段判斷（很重要）
+請依目前資訊判斷較接近下列何者並說明理由（擇一或複合）：
+- 爭議前/蒐證中
+- 已協商/對方不回應或拒絕
+- 已寄存證信函/律師函
+- 已進入訴訟或調解程序
+- 已有判決/調解筆錄，準備強制執行
 
-四、建議行動方案：
-提出三項具體可執行建議，例如聯繫、保存紀錄、委託第三方處理等。
+三、爭點與目標釐清
+1) 主要爭點（2～4 點）
+2) 您的主要目標（例如：拿回款項/停止侵害/要求履約/離婚與子女安排/賠償等）
+3) 對方可能的抗辯方向（1～3 點，避免想像新事實，僅以常見抗辯型態描述）
 
-五、證據與紀錄清單：
-條列當事人應準備的資料、紀錄與其用途。
+四、核心：訴訟/處理策略路徑（請給出強而有力的「路徑與順序」）
+請提出 2～3 條可行路徑，每條都要包含：
+- 適用情境：何時適合走這條
+- 優點：為何有力/效率高
+- 代價與風險：時間、成本、可能反效果
+並在最後明確選出「最推薦的一條」，給出具體理由（以目前資訊為準）。
 
-請僅針對事實、爭點、建議與證據整理進行撰寫，回覆內容請使用台灣法律用語與台灣民眾習慣表達方式，避免任何法律條文、裁判見解、法理說明或法律意見推論。禁止用**符號，影響美觀。
+五、推薦路徑的行動清單（可直接照做）
+請用 Step 1～Step 6 條列具體行動，包含：
+- 先做什麼、目的是什麼
+- 需要準備哪些材料/證據
+- 何時應升級（例如：對方逾期不回、拒絕履行、態度惡化）
+- 可能的替代選項（例如：先行保全、先調解、先支付命令或先提告等，以「選項」呈現）
+
+六、證據與紀錄清單（對應上面步驟）
+請條列「您應該準備的東西」，並在每一項後面註明用途（例如：用來證明金額、用來證明對方承諾、用來證明損害、用來證明通知送達等）。
+
+七、風險提醒與備案
+列出 3～5 點風險（例如：證據不足、對方脫產、時效風險、對方反告/反制、程序拖延），並給出各風險的備案作法（對應前述路徑）。
 
 以下為用戶問答紀錄（每題含：點選選項＋補充）：
 ------------------------------\n\n"""
+
 
         for idx, item in enumerate(followups):
             q = (item.get("q") or "").strip()
@@ -146,8 +171,7 @@ def generate_aireport_opinion():
 
 # AI Report「發送給律師」使用的 Email 文字 API
 # 前端會送進來 JSON：{ name, phone, line, text }
-# 本實作會使用環境變數中的 GMAIL_ACCOUNT / GMAIL_PASSWORD 登入，
-# 但收件人固定寄到 tony0975127359@gmail.com。
+# 本實作會使用環境變數中的 GMAIL_ACCOUNT / GMAIL_PASSWORD，透過 Gmail SMTP 寄信。
 @app.route("/api/email-text", methods=["POST"])
 def email_text():
     try:
@@ -159,7 +183,6 @@ def email_text():
 
         gmail_user = os.environ.get("GMAIL_ACCOUNT")
         gmail_pass = os.environ.get("GMAIL_PASSWORD")
-        receiver = "tony0975127359@gmail.com"
 
         if not gmail_user or not gmail_pass:
             raise RuntimeError("GMAIL_ACCOUNT 或 GMAIL_PASSWORD 未設定")
@@ -178,17 +201,17 @@ LINE ID：{line_id}
 
         msg = MIMEMultipart()
         msg["From"] = gmail_user
-        msg["To"] = receiver
+        msg["To"] = gmail_user
         msg["Subject"] = subject
         msg.attach(MIMEText(body, "plain", "utf-8"))
 
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
             server.login(gmail_user, gmail_pass)
-            server.sendmail(gmail_user, [receiver], msg.as_string())
+            server.sendmail(gmail_user, [gmail_user], msg.as_string())
 
         print("=== 已成功寄出 AI Report Email 給律師信箱 ===")
-        print("收件人:", receiver)
+        print("收件人:", gmail_user)
         print("姓名:", name, "電話:", phone, "LINE:", line_id)
         print("=== 結束 ===")
 
@@ -199,14 +222,11 @@ LINE ID：{line_id}
 
 
 # PDF 附件版寄信 API：前端以 form-data 上傳 pdf + 基本聯絡資訊
-# 同樣固定寄到 tony0975127359@gmail.com。
 @app.route("/api/email", methods=["POST"])
 def email_with_pdf():
     try:
         gmail_user = os.environ.get("GMAIL_ACCOUNT")
         gmail_pass = os.environ.get("GMAIL_PASSWORD")
-        receiver = "tony0975127359@gmail.com"
-
         if not gmail_user or not gmail_pass:
             raise RuntimeError("GMAIL_ACCOUNT 或 GMAIL_PASSWORD 未設定")
 
@@ -234,7 +254,7 @@ LINE ID：{line_id}
 
         msg = MIMEMultipart()
         msg["From"] = gmail_user
-        msg["To"] = receiver
+        msg["To"] = gmail_user
         msg["Subject"] = subject
         msg.attach(MIMEText(body, "plain", "utf-8"))
 
@@ -245,10 +265,10 @@ LINE ID：{line_id}
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
             server.login(gmail_user, gmail_pass)
-            server.sendmail(gmail_user, [receiver], msg.as_string())
+            server.sendmail(gmail_user, [gmail_user], msg.as_string())
 
         print("=== 已成功寄出 AI Report PDF Email 給律師信箱 ===")
-        print("收件人:", receiver)
+        print("收件人:", gmail_user)
         print("姓名:", name, "電話:", phone, "LINE:", line_id, "檔名:", filename)
         print("=== 結束 ===")
 
