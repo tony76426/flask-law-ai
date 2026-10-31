@@ -34,11 +34,15 @@ def generate():
         if not messages or not isinstance(messages, list):
             return jsonify({"error": "Invalid or missing 'messages'"}), 400
 
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=temperature,
-        )
+        completion_kwargs = {"model": model, "messages": messages}
+        if model == "gpt-6-luna":
+            completion_kwargs["reasoning_effort"] = "none"
+        elif model == "gpt-6.1-terra":
+            completion_kwargs["reasoning_effort"] = "medium"
+        else:
+            completion_kwargs["temperature"] = temperature
+
+        response = client.chat.completions.create(**completion_kwargs)
         return jsonify({
             "choices": [{
                 "message": {
@@ -124,9 +128,9 @@ def generate_aireport_opinion():
             final_prompt += f"補充內容：{custom if custom else '（無）'}\n\n"
 
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-6.1-terra",
             messages=[{"role": "user", "content": final_prompt}],
-            temperature=0.3,
+            reasoning_effort="medium",
         )
 
         return jsonify({
